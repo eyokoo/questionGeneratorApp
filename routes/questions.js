@@ -7,7 +7,7 @@ const checkJwt = require("../auth").checkJwt
 const isAdmin = require("../auth").isAdmin
 
 router.get("/questions", [checkJwt], controller.allQuestions); // GET returns the list of questions in my database
-router.get("/questions/:id", [checkJwt], controller.questionsById);// GET returns the question by id in my database
+router.get("/questions/:id", [checkJwt], controller.questionById);// GET returns the question by id in my database
 
 router.put("/questions/:id",[checkJwt, isAdmin], controller.editQuestion);//PUT should call the editQuestion function, and update the question in my database
 
