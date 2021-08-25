@@ -31,7 +31,7 @@ isAdmin = (req, res, next) => {
   // }
 }
 
-
+//******** MIDDLEWARE START *********///////
 //the middleware function to call when processing an authorization URL
 checkJwt = (req, res, next) => {
   console.log("Processing JWT authentication check");
@@ -63,12 +63,17 @@ checkJwt = (req, res, next) => {
   //   console.log(decoded);
   //   req.username = decoded.username;
   //   req.isAdmin = decoded.role == 'admin'
+  //req - had info about the post that you were to create
+  //by decoding the token we know who made the request
   //   //call the next middleware function in the chain
     next();
     //   });
     // };
   }
     
+//******** MIDDLEWARE END *********///////
+
+
 
 /**
  * GET /everyone
@@ -111,11 +116,10 @@ router.post("/login", (req, res) => {
   const password = req.body.password;
 
   //select the username, role and stored hash from the db for the user passed in
-  db.query("SELECT username, password_hash, role from users where username = ?", [username], (err, rows) => {
+  db.query("SELECT username, password_hash, role FROM users WHERE username = ?", [username], (err, rows) => {
 
     //assumes the password provided in the request is bad
     let goodPassword = false;
-    let role;
 
     //if the database failed then log an error
     if (err) {
@@ -159,10 +163,10 @@ router.post("/login", (req, res) => {
         role: role
       };
       //sign the token using the JWT secret
-      const accessToken = jwt.sign(unsignedToken, jwtSecret);
+      const accessToken = jwt.sign(unsignedToken, jwtSecret); //string
 
       //send the signed token back
-      res.json(accessToken);
+      res.json({accessToken, username});
     } else {
       //if the password provided was not good, or was not able to be verified
       //send an authorized message and code back

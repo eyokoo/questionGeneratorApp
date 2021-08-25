@@ -3,7 +3,7 @@ const connection = require("../sql/connection");
 //GET list all questions found in database
 let allQuestions = (req, res) => {
   console.log("Inside the GET list allQuestions function",req.params);
-  connection.query("SELECT * FROM questionsTable", (error, rows) => {
+  connection.query("SELECT * FROM questions_table", (error, rows) => {
     if (error) {
       console.log("Failed to list questions", error);
       res.sendStatus(500);
@@ -17,7 +17,7 @@ let allQuestions = (req, res) => {
 let questionById = (req, res) => {
   console.log("Inside the GET questionById function", req.params.id);
   let id = req.params.id
-  let sql = "SELECT id, question FROM questionsTable WHERE id =?" //sql command to send to the database
+  let sql = "SELECT id, question FROM questions_table WHERE id =?" //sql command to send to the database
   let params = [id];
   
   connection.query(sql, params, (error, rows) => {//make a connection to send the query
@@ -34,15 +34,36 @@ let questionById = (req, res) => {
 }
 
 //DO I NEED A FUNCTION TO GET A RANDOM ID?
+//select * from YOUR_TABLE order by rand() limit 1
+//GET/:id  get question by id at random
+let randomQuestion = (req, res) => {
+  console.log("Inside the GET randomQuestion function", req.params.id);
+  let id = req.params.id
+  let sql = "SELECT * FROM questions_table ORDER BY rand() limit 1" //sql command to send to the database
+  let params = [id];
+  
+  connection.query(sql, params, (error, rows) => {//make a connection to send the query
+    console.log("This is what's inside ROWS:", rows)
+    if (error) {
+      console.error("Failed to query the db", error);// if we get an error from the db
+      res.sendStatus(500);
+    } else if (!rows || rows.length == 0) {    // if we get no rows from the database
+      res.sendStatus(404);
+    } else {
+      res.send(rows[0]);
+    }
+  })
+}
 
 
 //PUT/:id  edit the question by id
 let editQuestion = (req, res) => {
   console.log("Inside the editQuestion function", req.params.id);
   let id = req.params.id
-  let updQuestion= req.body
-  let sql = "UPDATE questionsTable SET question=? WHERE id=?" 
-  let params = [updQuestion,id]
+  let updQuestion = req.body.question
+  let updCategory = req.body.category_id
+  let sql = "UPDATE questions_table SET question=?, category_id=? WHERE id=?"  //sql command to send to the database to update the questions table
+  let params = [updQuestion, updCategory, id]
   
   connection.query(sql,params,(error) => {
     if (error){
@@ -57,9 +78,10 @@ let editQuestion = (req, res) => {
 //POST add a question
 let addQuestion = (req, res) => {
   console.log("Inside the addQuestion function", req.body);
-  let newQuestion = req.body
+  let newQuestion = req.body.question
+  let newCategory = req.body.category_id
   
-  let sql = `INSERT INTO questionsTable (question) VALUES (?);`
+  let sql = `INSERT INTO questions_table (question,category_id) VALUES (?,?);`
   let params = [newQuestion];
 
     connection.query(sql, params, (error, results) => {
@@ -77,7 +99,7 @@ let addQuestion = (req, res) => {
 let deleteQuestion = (req, res) => {
   console.log("Inside the deleteQuestion function", req.params.id)
   let id = req.params.id
-  let sql = "DELETE FROM questionsTable WHERE id = ?"
+  let sql = "DELETE FROM questions_table WHERE id = ?"
   let params = [id];
 
     connection.query(sql, params, (error) => {
@@ -91,4 +113,4 @@ let deleteQuestion = (req, res) => {
 }
 
 
-module.exports = { allQuestions, questionById, editQuestion, addQuestion, deleteQuestion};
+module.exports = { allQuestions, questionById, randomQuestion, editQuestion, addQuestion, deleteQuestion};
