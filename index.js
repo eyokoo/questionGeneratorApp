@@ -7,7 +7,7 @@ const cors = require ('cors');
 app.use(cors());
 app.use(bodyParser.json());
 app.use(require("./routes/questions")); //importing the routes module
-app.use(require("./auth").router)
+
 
 
 

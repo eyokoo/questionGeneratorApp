@@ -33,8 +33,26 @@ let questionById = (req, res) => {
   })
 }
 
-//DO I NEED A FUNCTION TO GET A RANDOM ID?
-//select * from YOUR_TABLE order by rand() limit 1
+let questionByC = (req,res) => {
+console.log("Inside the GET questionsByC function",req.params.category)
+let questions = req.params.category
+let sql = "SELECT Q.id, question, C.category FROM questions_table AS Q INNER JOIN categories_table AS C ON C.id = Q.category_id WHERE C.id = ?"
+let params = [questions]
+
+connection.query(sql, params, (error, rows) => {//make a connection to send the query
+  console.log("This is what's inside ROWS:", rows)
+  if (error) {
+    console.error("Failed to query the db", error);// if we get an error from the db
+    res.sendStatus(500);
+  } else if (!rows || rows.length == 0) {    // if we get no rows from the database
+    res.sendStatus(404);
+  } else {
+    res.send(rows[0]);
+  }
+})
+}
+
+
 //GET/:id  get question by id at random
 let randomQuestion = (req, res) => {
   console.log("Inside the GET randomQuestion function", req.params.id);
@@ -54,7 +72,6 @@ let randomQuestion = (req, res) => {
     }
   })
 }
-
 
 //PUT/:id  edit the question by id
 let editQuestion = (req, res) => {
@@ -82,7 +99,7 @@ let addQuestion = (req, res) => {
   let newCategory = req.body.category_id
   
   let sql = `INSERT INTO questions_table (question,category_id) VALUES (?,?);`
-  let params = [newQuestion];
+  let params = [newQuestion, newCategory];
 
     connection.query(sql, params, (error, results) => {
       if (error) {
@@ -113,4 +130,4 @@ let deleteQuestion = (req, res) => {
 }
 
 
-module.exports = { allQuestions, questionById, randomQuestion, editQuestion, addQuestion, deleteQuestion};
+module.exports = { allQuestions, questionById, questionByC, randomQuestion, editQuestion, addQuestion,  deleteQuestion}; //add AddUser
