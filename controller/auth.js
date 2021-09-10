@@ -1,100 +1,87 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-const { getUserByEmail, createUser } = require("./users");
+const connection = require("../sql/connection");
+const mysql = require("mysql");
 
 function signIn(req, res) {
-//note that we do not print the body, since we do not want to leak the password in our logs
-console.log("POST /signin", req.body.name);
+  //note that we do not print the body, since we do not want to leak the password in our logs
+  console.log("POST /signin", req.body.email);
 
-//read the name and password from the post body
-const name = req.body.username;
-const password = req.body.password;
+  //read the username and password from the post body
+  const email = req.body.email;
+  const password = req.body.password;
 
-//select the username, role and stored hash from the db for the user passed in
-db.query("SELECT name, email, password FROM users WHERE name = ?", [name], (err, rows) => {
+  //select the username, role and stored hash from the db for the user passed in
+  connection.query(
+    "SELECT name, email, password FROM users WHERE email = ?",
+    [email],
+    (error, results) => {
+      if (error) {
+        res.status(500).send("Error with SQL");
+        return;
+      }
 
-  //assumes the password provided in the request is bad
-  let goodPassword = false;
+      const user = results[0];
 
-  //if the database failed then log an error
-  if (err) {
-    console.error("Error when querying the db", err);
-  }
+      if (!user || !comparePasswords(password, user.password)) {
+        res.status(400).send("incorrect email or password");
+        return;
+      }
 
-  //if the database returned too many rows then log the error
-  if (rows.length > 1) {
-    console.error("Found too many rows with the username", name);
-  }
-
-  //if the database returned no rows, then log it, but its not an error
-  //maybe the username never signed up with our application
-  if (rows.length == 0) {
-    console.log("Did not find a row with the username", name);
-  }
-
-  //if query ran without an error, and only 1 row came back,
-  //then check the stored hash against the password provided in the request
-  if (!err && rows.length == 1) {
-    row = rows[0];
-   
-    //get the stored hash from the database
-    let hash = row.password
-
-    //check that the hash in the database matched the password provided
-    goodPassword = bcrypt.compareSync(password, hash);
-  }
-
-  //if the password provided is good then return
-  //a signed copy of the access token
-  if (goodPassword) {
-    //the token should include the things that you are sending back to the client
-    //which include the username and role
-    //not a good idea to send the password or the hash of the password back
-    const unsignedToken = {
-      name: name
-    };
-    //sign the token using the JWT secret
-    const accessToken = jwt.sign(unsignedToken, jwtSecret); //string
-
-    //send the signed token back
-    res.json({accessToken, name: name});
-  } else {
-    //if the password provided was not good, or was not able to be verified
-    //send an authorized message and code back
-    res.status(401).send("Unauthorized!")
-  
-  }
-
-});
+      const token = generateJwtToken(user.id);
+      res.json({ token });
+      return;
+    }
+  );
 }
 
 function signUp(req, res) {
- //note that we do not include the password in the log
- console.log("POST /signup", req.body.name);
- let name = req.body.name;
- let password = req.body.password;
- let confirmPassword = req.body.confirmPassword;
+  //note that we do not include the password in the log
+  console.log("POST /signup", req.body.email);
+  const email = req.body.email;
+  const password = req.body.password;
+  const name = req.body.name;
 
- //make sure that the password and confirm password are the same
- if(password !== confirmPassword){
-   return res.status(400).send("Passwords do not match");
- }
+  //we need to queries in order for this to work
+  //first, make sure the user does not exist
+  //second, new user is created (insert into)
 
- //generate the hash of the password that will be stored in the database
- let pwEncrypt = bcrypt.hashSync(password,10);
- let sql = "INSERT INTO users(name, email, password) values (?, ?, ?);"
- db.query(sql, [name, pwEncrypt, 'user'], (err, rows) =>{
+  //get the user my email
+  const queryToGetUser = mysql.format("SELECT *  FROM users WHERE email = ?", [
+    email,
+  ]);
 
-   //if the insert query returned an error, we log the error
-   //and return a failed message back
-   if(err){
-     console.error("Failed to add user", err);
-     res.status(500).send("Failed to add user");
-   } else {
-     //if the insert statement ran without an error, then the user was created
-     res.send("User created");
-   }
- })
+  connection.query(queryToGetUser, (error, results) => {
+    if (error) {
+      res.status(500).send("Error with SQL");
+      return;
+    }
+
+    const user = results[0];
+
+    if (user) {
+      res.status(400).send("email already used");
+      return;
+    }
+
+    const encryptedPassword = encryptPassword(password);
+
+    //we now know the email hasn't be used before
+    //we can safely create (insert into) the new user
+    const insertNewUser = mysql.format(
+      "INSERT INTO users (name, email, password) VALUES(?, ?, ?)",
+      [name, email, encryptedPassword]
+    );
+
+    connection.query(insertNewUser, (error, results) => {
+      if (error) {
+        res.status(500).send("Error with SQL");
+        return;
+      }
+      const token = generateJwtToken(results.insertId);
+      res.json({ token });
+    });
+  });
 }
 
 //middleware
@@ -128,7 +115,7 @@ function authenticateJwtToken(req, res, next) {
   //   console.log(decoded);
   //   req.name = decoded.name;
   //   //call the next middleware function in the chain
-    next();
+  next();
   // });
 }
 
@@ -144,7 +131,7 @@ function encryptPassword(plainTextPassword) {
   return hash;
 }
 
-function generateJwtToke(id) {
+function generateJwtToken(id) {
   const token = jwt.sign({ id }, process.env.JWT_SECRET);
   return token;
 }
