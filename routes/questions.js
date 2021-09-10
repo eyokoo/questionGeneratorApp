@@ -13,7 +13,7 @@ router.get("/questions/:id", [checkJwt], controller.questionById);// GET returns
 
 router.get("/questions/category", [checkJwt], controller.questionByC);
 router.get("/questions", [checkJwt], controller.allQuestions); // GET returns the list of questions in my database
-router.put("/questions/:id", [checkJwt], controller.editQuestion); //PUT should call the editQuestion function, and update the question in my database
+router.put("/questions", [checkJwt], controller.editQuestion); //PUT should call the editQuestion function, and update the question in my database
 router.post("/questions", [checkJwt], controller.addQuestion); //POST should call the addQuestion function, and add a question to my database
 router.delete("/questions/:id", [checkJwt], controller.deleteQuestion); // DELETE should call the deleteQuestion function, and delete the question from my database
 
