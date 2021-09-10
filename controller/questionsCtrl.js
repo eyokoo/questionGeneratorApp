@@ -146,7 +146,7 @@ let addQuestion = (req, res) => {
   let newQuestion = req.body.question;
   let newCategory = req.body.category_id;
 
-  let sql = `INSERT INTO questions_table (question,category_id) VALUES (?,?);`;
+  let sql = `INSERT INTO questions_table (question,category_id) VALUES (?,?)`;
   let params = [newQuestion, newCategory];
 
   connection.query(sql, params, (error, results) => {
@@ -161,8 +161,8 @@ let addQuestion = (req, res) => {
 
 //DELETE a question by id
 let deleteQuestion = (req, res) => {
-  console.log("Inside the deleteQuestion function", req.params.id);
-  let id = req.params.id;
+  console.log("Inside the deleteQuestion function", req.body.id);
+  let id = req.body.id;
   let sql = "DELETE FROM questions_table WHERE id = ?";
   let params = [id];
 

@@ -6,6 +6,7 @@ const cors = require ('cors');
 
 app.use(cors());
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended:true}))
 app.use(require("./routes/questions")); //importing the routes module
 
 app.get('/', (req, res) => {

@@ -1,34 +1,54 @@
-// const { find } = require("lodash");
+const connection = require("../sql/connection");
+const { handleSQLError } = require("../sql/error");
 
-// function getUserById(request, response) {
-//   const { id } = request.user;
-//   const user = find(users, { id });
+const getUserById = (req, res) => {
+  let sql = "SELECT * FROM users WHERE id = ? ";
+  sql = mysql.format(sql, [req.params.id]);
 
-//   if (!user) {
-//     response.send(`No user found. User Id: ${user.id}`);
-//     return;
-//   }
+  connection.query(sql, (err, rows) => {
+    if (err) return handleSQLError(res, err);
+    return res.json(rows);
+  });
+}
 
-//   response.json(user);
-// }
+const getUserByEmail = (req, res) => {
+  let sql = "SELECT * FROM users WHERE email = ? ";
+  sql = mysql.format(sql, [req.params.email]);
 
-// function getUserByEmail(email) {
-//   const user = find(users, { email });
+  connection.query(sql, (err, rows) => {
+    if (err) return handleSQLError(res, err);
+    return res.json(rows);
+  });
+}
 
-//   if (!user) {
-//     return null;
-//   }
+const createUser = (req,res) => {
+  let sql = "INSERT INTO users (name, email, password) VALUES (?, ?, ?)";
+  sql = mysql.format(sql, [req.body]);
 
-//   return user;
-// }
+  connection.query(sql, (err, rows) => {
+    if (err) return handleSQLError(res, err);
+    return res.json(rows);
+  });
+}
 
-// function createUser(email, password, name) {
-//   const newUser = { email, password, name };
-//   newUser.id = users.length + 1;
+const updateUserById = (req, res) => {
+  let sql = "UPDATE users SET email = ?, password = ? WHERE id =?";
+  sql = mysql.format(sql, [req.body.email, req.body.password, req.params.id]);
 
-//   users.push(newUser);
+  connection.query(sql, (err, results) => {
+    if (err) return handleSQLError(res, err);
+    return res.status(204).json();
+  });
+};
 
-//   return newUser;
-// }
+const deleteUserById = (req, res) => {
+  let sql = "DELETE FROM users WHERE id = ?";
+  sql = mysql.format(sql, [req.params.id]);
 
-// module.exports = { getUserById, getUserByEmail, createUser };
+  connection.query(sql, (err, results) => {
+    if (err) return handleSQLError(res, err);
+    return res.json({ message: `Deleted ${results.affectedRows} user(s)` });
+  });
+};
+
+module.exports = { getUserById, getUserByEmail, createUser, updateUserById, deleteUserById };
