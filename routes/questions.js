@@ -8,6 +8,7 @@ const checkJwt = require("../controller/auth").authenticateJwtToken
 
 //Questions
 router.get("/questions/random", [checkJwt], controller.randomQuestion); //GET returns a random question by id in my database
+router.get("/questions/random/category", [checkJwt], controller.randomQuestionByC); 
 router.get("/questions/:id", [checkJwt], controller.questionById);// GET returns the question by id in my database
 router.get("/questions/category", [checkJwt], controller.questionByC);
 router.get("/questions", [checkJwt], controller.allQuestions); // GET returns the list of questions in my database
@@ -16,8 +17,8 @@ router.post("/questions", [checkJwt],controller.addQuestion);//POST should call 
 router.delete("/questions/:id", [checkJwt], controller.deleteQuestion);// DELETE should call the deleteQuestion function, and delete the question from my database
 
 //Auth
-router.post("/auth/signin", [checkJwt], signIn);//POST should call the signIn function
-router.post("/auth/signup", [checkJwt], signUp);//POST should call the signUp function
+router.post("/auth/signin", signIn);//POST should call the signIn function
+router.post("/auth/signup", signUp);//POST should call the signUp function
 
 // router.put("/users/:id", [checkJwt], controller.editUser);//PUT should call the editUser function, and edit a user to my database
 // router.delete("/users/:id", [checkJwt], controller.deleteUser);// DELETE should call the deleteUser function, and delete the user from my database

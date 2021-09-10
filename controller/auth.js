@@ -1,17 +1,18 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const { getUserByEmail, createUser } = require("./users");
+const connection = require("../sql/connection");
 
 function signIn(req, res) {
 //note that we do not print the body, since we do not want to leak the password in our logs
-console.log("POST /signin", req.body.name);
+console.log("POST /signin", req.body.email);
 
 //read the name and password from the post body
-const name = req.body.username;
+const email = req.body.email;
 const password = req.body.password;
 
 //select the username, role and stored hash from the db for the user passed in
-db.query("SELECT name, email, password FROM users WHERE name = ?", [name], (err, rows) => {
+connection.query("SELECT id, name, email, password FROM users WHERE email = ?", [email], (err, rows) => {
 
   //assumes the password provided in the request is bad
   let goodPassword = false;
@@ -19,17 +20,22 @@ db.query("SELECT name, email, password FROM users WHERE name = ?", [name], (err,
   //if the database failed then log an error
   if (err) {
     console.error("Error when querying the db", err);
+    res.status(400).send("Incorrect email or password.");
+    return;
   }
 
-  //if the database returned too many rows then log the error
-  if (rows.length > 1) {
-    console.error("Found too many rows with the username", name);
-  }
+  // //if the database returned too many rows then log the error
+  // if (rows.length > 1) {
+  //   res.status(400).send("User already exists.")
+  //   console.error("Found too many rows with the username", name);
+  // }
 
   //if the database returned no rows, then log it, but its not an error
   //maybe the username never signed up with our application
   if (rows.length == 0) {
-    console.log("Did not find a row with the username", name);
+    res.status(400).send("User does not exist.")
+    console.log("Did not find a row with the email", email);
+    return
   }
 
   //if query ran without an error, and only 1 row came back,
@@ -51,17 +57,19 @@ db.query("SELECT name, email, password FROM users WHERE name = ?", [name], (err,
     //which include the username and role
     //not a good idea to send the password or the hash of the password back
     const unsignedToken = {
-      name: name
+      id: row.id
     };
     //sign the token using the JWT secret
     const accessToken = jwt.sign(unsignedToken, jwtSecret); //string
 
     //send the signed token back
-    res.json({accessToken, name: name});
+    res.json({accessToken, name: row.name});
+    return
   } else {
     //if the password provided was not good, or was not able to be verified
     //send an authorized message and code back
-    res.status(401).send("Unauthorized!")
+    res.status(400).send("Incorrect email or password.")
+    return 
   
   }
 
@@ -83,7 +91,7 @@ function signUp(req, res) {
  //generate the hash of the password that will be stored in the database
  let pwEncrypt = bcrypt.hashSync(password,10);
  let sql = "INSERT INTO users(name, email, password) values (?, ?, ?);"
- db.query(sql, [name, pwEncrypt, 'user'], (err, rows) =>{
+ connnection.query(sql, [name, pwEncrypt, 'user'], (err, rows) =>{
 
    //if the insert query returned an error, we log the error
    //and return a failed message back

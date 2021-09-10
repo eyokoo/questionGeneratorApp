@@ -17,7 +17,7 @@ let allQuestions = (req, res) => {
 let questionById = (req, res) => {
   console.log("Inside the GET questionById function", req.params.id);
   let id = req.params.id
-  let sql = "SELECT id, question FROM questions_table WHERE id =?" //sql command to send to the database
+  let sql = "SELECT Q.id, question, C.category FROM questions_table AS Q INNER JOIN categories_table AS C ON C.id = Q.category_id WHERE Q.id = ?" //sql command to send to the database
   let params = [id];
   
   connection.query(sql, params, (error, rows) => {//make a connection to send the query
@@ -52,6 +52,24 @@ connection.query(sql, params, (error, rows) => {//make a connection to send the 
 })
 }
 
+let randomQuestionByC = (req,res) => {
+  console.log("Inside the GET randomQuestionByC function",req.params.category)
+  let question = req.params.category
+  let sql = "SELECT Q.id, question, C.category FROM questions_table AS Q INNER JOIN categories_table AS C ON C.id = Q.category_id ORDER BY rand() limit 1"
+  let params = [question] //do i need to add categoy in here?
+  
+  connection.query(sql, params, (error, rows) => {//make a connection to send the query
+    console.log("This is what's inside ROWS:", rows)
+    if (error) {
+      console.error("Failed to query the db", error);// if we get an error from the db
+      res.sendStatus(500);
+    } else if (!rows || rows.length == 0) {    // if we get no rows from the database
+      res.sendStatus(404);
+    } else {
+      res.send(rows[0]);
+    }
+  })
+  }
 
 //GET/:id  get question by id at random
 let randomQuestion = (req, res) => {
@@ -130,4 +148,4 @@ let deleteQuestion = (req, res) => {
 }
 
 
-module.exports = { allQuestions, questionById, questionByC, randomQuestion, editQuestion, addQuestion,  deleteQuestion}; //add AddUser
+module.exports = { allQuestions, questionById, questionByC, randomQuestion, randomQuestionByC,editQuestion, addQuestion,  deleteQuestion}; //add AddUser
