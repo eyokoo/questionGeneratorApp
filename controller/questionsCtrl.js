@@ -18,6 +18,7 @@ let questionById = (req, res) => {
   console.log("Inside the GET questionById function", req.params.id);
   const id = req.params.id;
   let sql = "SELECT id, question FROM questions_table WHERE id =?"; //sql command to send to the database
+
   let params = [id];
 
   connection.query(sql, params, (error, rows) => {
@@ -57,8 +58,46 @@ let questionByC = (req, res) => {
     } else {
       res.send(rows[0]);
     }
-  });
-};
+  })
+}
+
+let questionByC = (req,res) => {
+console.log("Inside the GET questionsByC function",req.params.category)
+let questions = req.params.category
+let sql = "SELECT Q.id, question, C.category FROM questions_table AS Q INNER JOIN categories_table AS C ON C.id = Q.category_id WHERE C.id = ?"
+let params = [questions]
+
+connection.query(sql, params, (error, rows) => {//make a connection to send the query
+  console.log("This is what's inside ROWS:", rows)
+  if (error) {
+    console.error("Failed to query the db", error);// if we get an error from the db
+    res.sendStatus(500);
+  } else if (!rows || rows.length == 0) {    // if we get no rows from the database
+    res.sendStatus(404);
+  } else {
+    res.send(rows[0]);
+  }
+})
+}
+
+let randomQuestionByC = (req,res) => {
+  console.log("Inside the GET randomQuestionByC function",req.params.category)
+  let question = req.params.category
+  let sql = "SELECT Q.id, question, C.category FROM questions_table AS Q INNER JOIN categories_table AS C ON C.id = Q.category_id ORDER BY rand() limit 1"
+  let params = [question] //do i need to add categoy in here?
+  
+  connection.query(sql, params, (error, rows) => {//make a connection to send the query
+    console.log("This is what's inside ROWS:", rows)
+    if (error) {
+      console.error("Failed to query the db", error);// if we get an error from the db
+      res.sendStatus(500);
+    } else if (!rows || rows.length == 0) {    // if we get no rows from the database
+      res.sendStatus(404);
+    } else {
+      res.send(rows[0]);
+    }
+  })
+  }
 
 //GET/:id  get question by id at random
 let randomQuestion = (req, res) => {
@@ -146,3 +185,4 @@ module.exports = {
   addQuestion,
   deleteQuestion,
 }; //add AddUser
+
