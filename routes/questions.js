@@ -23,8 +23,8 @@ router.post("/auth/signin", signIn);//POST should call the signIn function
 router.post("/auth/signup", signUp);//POST should call the signUp function
 
 
-outer.get("/users/:id", [checkJwt], usersCtrl.getUserById);
-outer.get("/users/email", [checkJwt], usersCtrl.getUserByEmail);
+router.get("/users/:id", [checkJwt], usersCtrl.getUserById);
+router.get("/users/email", [checkJwt], usersCtrl.getUserByEmail);
 router.post("/users", [checkJwt], usersCtrl.createUser);
 router.put("/users/:id", [checkJwt], usersCtrl.updateUserById);//PUT should call the editUser function, and edit a user to my database
 router.delete("/users/:id", [checkJwt], usersCtrl.deleteUserById);// DELETE should call the deleteUser function, and delete the user from my database
